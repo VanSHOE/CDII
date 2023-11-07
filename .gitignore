@@ -1,0 +1,8 @@
+.DS_Store
+.venv
+cytoscape
+data_quora/*
+data_sharechat/*
+graphs/*
+
+!*/.gitkeep
