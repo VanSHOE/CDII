@@ -6,3 +6,11 @@ data_sharechat/*
 graphs/*
 
 !*/.gitkeep
+
+uploads/*
+!uploads/.gitkeep
+
+__pycache__/*
+
+user_EDA/
+user_data/

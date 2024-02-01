@@ -146,6 +146,10 @@ if __name__ == "__main__":
         exit(1)
     
     input_paths = []
+    
+    if args.input.endswith(".csv"):
+        input_paths = [args.input]
+    
     #  get paths of all csv files in input folder
     for root, dirs, files in os.walk(args.input):
         for file in files:
