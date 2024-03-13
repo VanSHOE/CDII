@@ -3,9 +3,10 @@ import pandas as pd
 import csv
 import os
 import argparse
+from location_parser import LocationParser
 
 class GraphConverter:
-    def __init__(self, input_paths):
+    def __init__(self, input_paths, user_input_path=None):
         self.input_paths = input_paths
         self.output_path = None
         self.df = None
@@ -17,6 +18,15 @@ class GraphConverter:
         self.upvote_edges = []
         self.weighted_edges = []
         self.graph = None
+        self.user_locations = []
+        if user_input_path:
+            self.location_parser = LocationParser(user_input_path)
+        else:
+            self.location_parser = None
+    
+    def parse_location(self):
+        if self.location_parser:
+            self.location_parser.run()
     
     def print_stats(self):
         print(f"Users: {len(self.users)}")
@@ -53,7 +63,7 @@ class GraphConverter:
             with open(path, 'r') as f:
                 reader = csv.DictReader(f)
                 # skip the header
-                next(reader)
+                # next(reader)
                 for row in reader:
                     self.users.append(row['author'])
                     
@@ -78,6 +88,13 @@ class GraphConverter:
                     })
         # give each user a unique id
         self.users = list(set(self.users))
+        self.user_locations = ['None' for i in range(len(self.users))]
+        for i in range(len(self.users)):
+            # get location of user if available
+            if self.location_parser:
+                location = self.location_parser.query(self.users[i])
+                if location:
+                    self.user_locations[i] = location
         self.users = {user: i for i, user in enumerate(self.users)}
     
     def set_comment_edges(self):
@@ -113,17 +130,22 @@ class GraphConverter:
         self.vertex_df = self.vertex_df[['id', 'label']]
     
     def create_graph(self):
-        self.graph = nx.from_pandas_edgelist(self.df, 'from', 'to', ['weight', 'label'], create_using=nx.DiGraph())
-        # check if graph is directed
-        print(nx.is_directed(self.graph))
+        self.graph = nx.from_pandas_edgelist(self.df, 'from', 'to', ['weight', 'label'])
+        print(self.graph)
+    
+    def add_location_to_graph(self):
+        # add location as an attribute to the graph
+        nx.set_node_attributes(self.graph, {i: loc for i, loc in enumerate(self.user_locations)}, "location")
     
     def run(self, logs=False):
+        self.parse_location()
         self.read_csv()
         self.set_comment_edges()
         self.set_upvote_edges()
         self.set_weighted_edges()
         self.create_dataframes()
         self.create_graph()
+        self.add_location_to_graph()
         if(logs):
             self.print_stats()
         
@@ -134,6 +156,7 @@ if __name__ == "__main__":
     parser.add_argument('-i','--input', dest='input', type=str, help='Input folder path')
     parser.add_argument('-o','--output', dest='output', type=str, help='Output file directory')
     parser.add_argument('-n','--name', dest='name', type=str, help='Output file name')
+    parser.add_argument('-u', '--user_input_paths', dest='user_input_paths', type=str)
 
     args = parser.parse_args()
     
@@ -160,8 +183,18 @@ if __name__ == "__main__":
         print("No valid input paths found")
         exit(1)
     
-    gc = GraphConverter(input_paths)
+    uip = []
+    if args.user_input_paths is not None:
+        if args.user_input_paths.endswith(".csv"):
+            uip = [args.user_input_paths]
+        else:
+            for root, dirs, files in os.walk(args.user_input_paths):
+                for file in files:
+                    if file.endswith(".csv"):
+                        uip.append(os.path.join(root, file))
+    
+    gc = GraphConverter(input_paths, user_input_path=uip)
     gc.run(logs=True)
     
-    # save graphml file to output path
+    # save graphml file to output pathçç
     nx.write_graphml(gc.graph, args.output + '/' + args.name + ".graphml")
