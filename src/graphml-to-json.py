@@ -1,6 +1,7 @@
 import argparse
 from xml.etree.ElementTree import ElementTree
 import json
+import os
 
 parser = argparse.ArgumentParser(description="Convert GraphML file to JSON")
 parser.add_argument("--static", action="store_true", default=False, required=False, help="Specify whether you would to include static properties from source file")
@@ -63,4 +64,5 @@ for edge in edges[:]:
             "group": group
         })
 outfilename = args.filename.split(".")[-2] + ".json" if len(args.filename.split(".")) >= 2 else args.filename + ".json"
+# create file if it does not exist
 open(outfilename, "w").write(json.dumps(out))

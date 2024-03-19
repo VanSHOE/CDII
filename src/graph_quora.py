@@ -10,6 +10,7 @@ class GraphConverter:
         self.input_paths = input_paths
         self.output_path = None
         self.df = None
+        self.search_terms = {}
         self.vertex_df = None
         self.users = []
         self.comments = []
@@ -19,6 +20,7 @@ class GraphConverter:
         self.weighted_edges = []
         self.graph = None
         self.user_locations = []
+        self.user_search_terms = []
         if user_input_path:
             self.location_parser = LocationParser(user_input_path)
         else:
@@ -66,7 +68,7 @@ class GraphConverter:
                 # next(reader)
                 for row in reader:
                     self.users.append(row['author'])
-                    
+                    self.search_terms[row['author']] = path.split("/")[-1].split(".")[0]
                     commenters = row['commenters'].strip("][").split(', ')
                     commenters = [x.strip("'") for x in commenters]
                     self.users.extend(commenters)
@@ -86,6 +88,12 @@ class GraphConverter:
                         'upvoters': upvoters,
                         "csv": path.split("/")[-1].split(".")[0]
                     })
+                    
+                    for user in commenters:
+                        self.search_terms[user] = path.split("/")[-1].split(".")[0]
+                    for user in upvoters:
+                        self.search_terms[user] = path.split("/")[-1].split(".")[0]
+                    
         # give each user a unique id
         self.users = list(set(self.users))
         self.user_locations = ['None' for i in range(len(self.users))]
@@ -95,6 +103,9 @@ class GraphConverter:
                 location = self.location_parser.query(self.users[i])
                 if location:
                     self.user_locations[i] = location
+        for i in range(len(self.users)):
+            search_term = self.search_terms[self.users[i]]
+            self.user_search_terms.append(search_term)
         self.users = {user: i for i, user in enumerate(self.users)}
     
     def set_comment_edges(self):
@@ -137,6 +148,10 @@ class GraphConverter:
         # add location as an attribute to the graph
         nx.set_node_attributes(self.graph, {i: loc for i, loc in enumerate(self.user_locations)}, "location")
     
+    def add_search_terms_to_graph(self):
+        # add search terms as an attribute to the graph
+        nx.set_node_attributes(self.graph, {i: term for i, term in enumerate(self.user_search_terms)}, "search_term")
+    
     def run(self, logs=False):
         self.parse_location()
         self.read_csv()
@@ -146,6 +161,7 @@ class GraphConverter:
         self.create_dataframes()
         self.create_graph()
         self.add_location_to_graph()
+        self.add_search_terms_to_graph()
         if(logs):
             self.print_stats()
         
