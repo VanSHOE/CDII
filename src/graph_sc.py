@@ -73,6 +73,8 @@ class GraphConverter:
         self.users.append(author)
         
         # get users who liked the post
+        if 'users' not in data:
+            return
         like_users = data['users']
         self.users.extend(like_users)
         self.likes.append({

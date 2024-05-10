@@ -28,7 +28,7 @@ def convert_graph():
         return 'Invalid request'
 
     fname = request.json['fname']
-    type = request.json['type']
+    type = 'QP'
     # run graph converter
     os.system(f'python graphConverter.py -i uploads/{fname} -o uploads/ -t {type} -n {fname.split(".")[0]}')
     # delete file from uploads
@@ -77,8 +77,32 @@ def export():
     fname = f'{fname.split(".")[0]}.json'
     # send the json content of file back as json
     
-    f = open(f'uploads/{fname}', 'r')
+    f = open(f'json/{fname}', 'r')
     content = json.load(f)
     f.close()
     
     return content
+
+@app.route('/tojson', methods=['POST'])
+@cross_origin(supports_credentials=True)
+def to_json():
+    if request.method != 'POST':
+        return 'Invalid request'
+
+    fname = request.json['fname']
+    # run graphml-to-json
+    os.system(f'python3 src/graphml-to-json.py uploads/{fname}')
+    return 'converted to json'
+
+@app.route('/list', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def list_files():
+    if request.method != 'GET':
+        return 'Invalid request'
+
+    # list the names of all available files in json folder
+    files = os.listdir('json')
+    return {'files': files}
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5002)

@@ -122,7 +122,7 @@ if __name__ == "__main__":
             if args.output is None:
                 graph.export_meta(args.output)
             exit(0)
-    elif args.influencers:
+    if args.influencers:
         graph.assign_influencers()
     if args.output is not None:
         graph.export(args.output)

@@ -212,5 +212,5 @@ if __name__ == "__main__":
     gc = GraphConverter(input_paths, user_input_path=uip)
     gc.run(logs=True)
     
-    # save graphml file to output pathçç
+    # save graphml file to output path
     nx.write_graphml(gc.graph, args.output + '/' + args.name + ".graphml")
