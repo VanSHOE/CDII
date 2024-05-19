@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  selenium-chrome:
+    build: .
+    ports:
+      - "8000:8000" # Expose VNC port
+      - "5003:5003" # If you need to expose the Flask port
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - DISPLAY=:99
+      - SE_OPTS=-debug # If you want to see Selenium logs
+      # Set a password for the VNC server (change 'secret' to a password of your choice)
+      - VNC_NO_PASSWORD=1
