@@ -4,3 +4,4 @@ matplotlib
 numpy
 pyvis
 scikit_learn
+flask_cors
