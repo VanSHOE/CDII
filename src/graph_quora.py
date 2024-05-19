@@ -27,6 +27,7 @@ class GraphConverter:
             self.location_parser = None
     
     def parse_location(self):
+        print("Parsing locations")
         if self.location_parser:
             self.location_parser.run()
     

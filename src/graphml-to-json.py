@@ -16,7 +16,6 @@ def load_graph(filename):
 def graph_to_json(G):
     nodes = []
     for node in G.nodes(data=True):
-        print(node)
         id = node[0]
         group = node[1]['group'] if 'group' in node[1] else 0
         location = node[1]['location'] if 'location' in node[1] else ""

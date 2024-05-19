@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from flask_cors import CORS, cross_origin
 import os
 import json
+import subprocess
 
 app = Flask(__name__)
 CORS(app, support_credentials=True)
@@ -21,6 +22,19 @@ def upload():
     f.save(f'uploads/{f.filename}')
     return 'file uploaded successfully'
 
+@app.route('/uploaduserfile', methods=['POST'])
+@cross_origin(supports_credentials=True, origins='*')
+def uploadUserFile():
+    if request.method != 'POST':
+        return 'Invalid request'
+        
+    f = request.files['file']
+    f.save(f'uploads/users/{f.filename}')
+    return 'file uploaded successfully'
+
+
+    
+
 @app.route('/convert', methods=['POST'])
 @cross_origin(supports_credentials=True, origins='*')
 def convert_graph():
@@ -28,42 +42,76 @@ def convert_graph():
         return 'Invalid request'
 
     fname = request.json['fname']
-    type = 'QP'
-    # run graph converter
-    os.system(f'python graphConverter.py -i uploads/{fname} -o uploads/ -t {type} -n {fname.split(".")[0]}')
+    try:
+        comm_algo = request.json['comm_algo']
+    except:
+        comm_algo = 'louvain'
+    
+    try:
+        influencer_algo = request.json['influencer_algo']
+    except:
+        influencer_algo = 'voterank'
+    
+    try:
+        influencer_percentage = request.json['influencer_percentage']
+    except:
+        influencer_percentage = 0.05
+
+    # run graph converter as subprocess so that it runs in background
+    subprocess.Popen([
+        'sh',
+        'convert-and-run.sh',
+        fname,
+        fname.split('.')[0],
+        comm_algo,
+        influencer_algo,
+        str(influencer_percentage)
+    ])
     # delete file from uploads
-    os.remove(f'uploads/{fname}')
+    # os.remove(f'uploads/{fname}')
     
     # return file name as json
-    return {'fname': f'{fname.split(".")[0]}.graphml'}
+    return 'running graph converter'
 
-@app.route('/community', methods=['POST'])
-@cross_origin(supports_credentials=True)
-def community_detection():
+@app.route('/convertsc', methods=['POST'])
+@cross_origin(supports_credentials=True, origins='*')
+def convert_graph_sc():
+    # sharechat graph conversion
     if request.method != 'POST':
         return 'Invalid request'
-
+    
     fname = request.json['fname']
     try:
-        algo = request.json['algo']
+        comm_algo = request.json['comm_algo']
     except:
-        algo = 'louvain'
+        comm_algo = 'louvain'
     
-    # run community detection
-    os.system(f'python graphActions.py -i uploads/{fname} -o uploads/{fname} -c -a {algo}')
-    os.system(f'python3 src/ghraphml-to-json.py uploads/{fname}')
-    return 'community detection completed'
+    try:
+        influencer_algo = request.json['influencer_algo']
+    except:
+        influencer_algo = 'voterank'
+    
+    try:
+        influencer_percentage = request.json['influencer_percentage']
+    except:
+        influencer_percentage = 0.05
 
-@app.route('/influencers', methods=['POST'])
-@cross_origin(supports_credentials=True)
-def influencer_identification():
-    if request.method != 'POST':
-        return 'Invalid request'
-
-    fname = request.json['fname']
-    # run influencer identification
-    os.system(f'python graphActions.py -i uploads/{fname} -o uploads/{fname} -in')
-    return 'influencer identification completed'
+    # run graph converter as subprocess so that it runs in background
+    subprocess.Popen([
+        'sh',
+        'convert-and-run-sc.sh',
+        fname,
+        fname.split('.')[0],
+        comm_algo,
+        influencer_algo,
+        str(influencer_percentage)
+    ])
+    # delete file from uploads
+    # os.remove(f'uploads/{fname}')
+    
+    # return file name as json
+    return 'running graph converter'
+    
 
 @app.route('/export', methods=['GET'])
 @cross_origin(supports_credentials=True)

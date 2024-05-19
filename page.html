@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Detection</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        .boxcontainer {
+            max-width: 400px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .btn-row {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/search.html">Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/page.html">Run Algorithms</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/graph.html">Visualise</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container d-flex justify-content-center align-items-center w-full">
+        <div class="container text-center p-5">
+            <h2>Community Detection & Influencer Identification</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="row justify-content-between shadow">
+                    <div class="col-md-4 p-3 mb-5 bg-white rounded justify-center">
+
+                        <div class="form-group">
+
+                        </div>
+
+                        <div class="form-group">
+                            <h5 class="text-center">For Quora</h5>
+                            <div class="form-group">
+                                <label for="file">Upload Post CSV File:</label>
+                                <input type="file" class="form-control-file" id="file" name="file">
+                            </div>
+                            <div class="form-group">
+                                <label for="userfile">Upload User CSV File:</label>
+                                <input type="file" class="form-control-file" id="userfile" name="userfile">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <h5 class="text-center">For Sharechat</h5>
+                            <div class="form-group">
+                                <label for="jsonfile">Upload Output JSONL File:</label>
+                                <input type="file" class="form-control-file" id="jsonfile" name="jsonfile"
+                                    accept=".jsonl">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 p-3 mb-5 bg-white rounded">
+                        <div class="form-group">
+                            <label for="algo">Choose an Algorithm for Community Detection:</label>
+                            <select class="form-control" id="algo" name="algo">
+                                <option value="louvain">Louvain</option>
+                                <option value="lpa">LPA</option>
+                                <option value="greedy_modularity">Greedy Modularity</option>
+                                <option value="asyn_lpa">Asynchronous LPA</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+
+                            <label for="influencerAlgo">Choose an Algorithm for Influencer Identification:</label><br>
+                            <select class="form-control" id="influencerAlgo" name="influencerAlgo">
+                                <option value="voterank">VoteRank</option>
+                                <option value="pagerank">PageRank</option>
+                                <option value="closeness">Closeness</option>
+                                <option value="betweenness">Betweenness</option>
+                                <option value="eigenvector">Eigenvector</option>
+                            </select><br><br>
+
+                            <label for="iap"> Fraction of users to classify as influencers </label>
+                            <input type="number" class="form-control" id="iap" name="iap" placeholder="0.01" value="0.01">
+                        </div>
+                    </div>
+                    <div class="col-md-4 p-3 mb-5 bg-white rounded">
+                        <div class="btn-row">
+                            <button type="button" class="btn btn-primary" onclick="uploadFile()">Upload Quora Post
+                                file</button>
+                        </div>
+                        <div class="btn-row">
+                            <button type="button" class="btn btn-primary" onclick="uploadUserFile()">Upload Quora User
+                                file</button>
+                        </div>
+                        <div class="btn-row">
+                            <button type="button" class="btn btn-primary" onclick="uploadJsonFile()">Upload Sharechat
+                                file</button>
+                        </div>
+                        <div class="btn-row">
+                            <button type="button" class="btn btn-success" onclick="runAlgos()">Run Algorithms</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+        const base_url = "http://192.168.1.106:5002"
+
+        function uploadFile() {
+            var fileInput = document.getElementById('file');
+            var file = fileInput.files[0];
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            fetch(`${base_url}/upload`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(data => {
+                    console.log(data);
+                    alert('Post file uploaded successfully');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error occurred during file upload.');
+                });
+        }
+
+        function uploadJsonFile() {
+            var fileInput = document.getElementById('jsonfile');
+            var file = fileInput.files[0];
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            fetch(`${base_url}/upload`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(data => {
+                    console.log(data);
+                    alert('Post file uploaded successfully');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error occurred during file upload.');
+                });
+        }
+
+
+        function uploadUserFile() {
+            var fileInput = document.getElementById('userfile');
+            var file = fileInput.files[0];
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            fetch(`${base_url}/uploaduserfile`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(data => {
+                    console.log(data);
+                    alert('User file uploaded successfully');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error occurred during file upload.');
+                });
+        }
+
+        function runAlgos() {
+            var fileInput = document.getElementById('file');
+            var file = fileInput.files[0];
+
+            var commAlgoSelect = document.getElementById('algo');
+            var commAlgo = commAlgoSelect.value;
+
+            var influencerAlgoSelect = document.getElementById('influencerAlgo');
+            var influencerAlgo = influencerAlgoSelect.value;
+
+            // if file is not undefined, run quora algos
+            if (file) {
+                fetch(`${base_url}/convert`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fname: file.name,
+                        comm_algo: commAlgo,
+                        influencer_algo: influencerAlgo,
+                        influencer_percentage: document.getElementById('iap').value
+                    })
+                })
+                    .then(data => {
+                        console.log(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            } else {
+                var jsonfileInput = document.getElementById('jsonfile');
+                var jsonfile = jsonfileInput.files[0];
+
+                fetch(`${base_url}/convertsc`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fname: jsonfile.name,
+                        comm_algo: commAlgo,
+                        influencer_algo: influencerAlgo,
+                        influencer_percentage: document.getElementById('iap').value
+                    })
+                })
+                    .then(data => {
+                        console.log(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+        }
+    </script>
+</body>
+
+</html>

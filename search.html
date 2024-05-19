@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+    <style>
+        .form-control::placeholder {
+            text-align: center;
+        }
+    </style>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/search.html">Search</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/page.html">Run Algorithms</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/graph.html">Visualise</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="col-4 mt-5">
+            <h2>Select the site to search</h2>
+            <div class="form-group">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="options" id="option1" value="quora" checked>
+                    <label class="form-check-label" for="option1">
+                        Quora
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="options" id="option2" value="sharechat">
+                    <label class="form-check-label" for="option2">
+                        Sharechat
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="options" id="option3" value="both">
+                    <label class="form-check-label" for="option3">
+                        Both
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card w-75">
+            <div class="card-body">
+                <div class="text-center">
+                    <h2>Enter Keywords </h2>
+                </div>
+                <input type="text" class="form-control" id="searchInput"
+                    placeholder="Enter comma separated search terms">
+                <div>
+                    <label for="fileInput">Or upload a .txt file with a search term on each line:</label>
+                    <input type="file" class="form-control" id="fileInput" accept=".txt"
+                        onchange="handleFileUpload(event)">
+                </div>
+
+                <div class="text-center">
+                    <button class="btn btn-primary mt-2" onclick="sendSearchTerms()">Send Selected Items</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+    <script>
+
+        var search_site = 'quora'
+
+        function getSelectedValue() {
+            const options = document.getElementsByName('options');
+            let selectedValue;
+            for (const option of options) {
+                if (option.checked) {
+                    selectedValue = option.value;
+                    break;
+                }
+            }
+
+            search_site = selectedValue
+            console.log(search_site);
+        }
+
+        function quoraSearch(searchTerms) {
+            const apiUrl = 'http://192.168.1.106:5001/scrape';
+            if (searchTerms.length === 0) {
+                alert("Please enter at least one search term.");
+                return;
+            }
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    search_terms: searchTerms,
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to send selected items to API');
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function sharechatSearch(searchTerms) {
+            const apiUrl = 'http://172.20.10.4:5001/scrape';
+
+            if (searchTerms.length != 1) {
+                alert("Sharechat search accepts only one search term.");
+                return;
+            }
+
+            search_term = searchTerms[0]
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tag_keyword: search_term,
+                    tag_keyword_limit: 1,
+                    maxCount: 10,
+                    outputName: `${search_term}.jsonl`
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to send selected items to API');
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function sendSearchTerms() {
+            const searchTermsText = document.getElementById('searchInput').value;
+
+            // comma separated search terms
+            const searchTerms = searchTermsText.split(',').map(term => term.trim());
+
+            if (search_site === 'quora') {
+                quoraSearch(searchTerms);
+            } else if (search_site === 'sharechat') {
+                sharechatSearch(searchTerms);
+            } else {
+                quoraSearch(searchTerms);
+                sharechatSearch(searchTerms);
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const contents = e.target.result;
+                    const searchTermsFromFile = contents.split('\n').map(line => line.trim()).filter(line => line);
+                    document.getElementById('searchInput').value = searchTermsFromFile.join(', ');
+                };
+                reader.readAsText(file);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
